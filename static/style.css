@@ -1,0 +1,139 @@
+/* === 全局樣式 === */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: "Microsoft JhengHei", Arial, sans-serif;
+    background: linear-gradient(180deg, #fce4ec, #f9f6fb);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+}
+
+/* === 頁首 === */
+header {
+    background: linear-gradient(90deg, #ff99cc, #ff66b2);
+    padding: 1.2rem;
+    text-align: center;
+    color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+nav a {
+    margin: 0 12px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+nav a:hover {
+    text-decoration: underline;
+    color: #ffe6f0;
+}
+
+/* === 主要內容區 === */
+main {
+    flex: 1;
+    padding: 30px;
+    min-height: 400px;
+}
+
+/* === 頁腳 === */
+footer {
+    text-align: center;
+    background: linear-gradient(90deg, #ff99cc, #cc66ff);
+    color: white;
+    padding: 12px;
+    margin-top: auto;
+    font-size: 0.9rem;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+}
+footer a {
+    color: #ffe6ff;
+    text-decoration: none;
+}
+
+/* === 標題樣式 === */
+h1, h2 {
+    color: #cc3366;
+    text-shadow: 1px 1px 2px rgba(255, 200, 220, 0.6);
+}
+
+/* === 關於我們背景 === */
+.about-bg {
+    position: relative;
+    background: url("/static/images/school.png") no-repeat center center;
+    background-size: cover;
+    padding: 40px;
+    border-radius: 12px;
+    overflow: hidden;
+    color: white;
+}
+.about-bg::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.45);
+    z-index: 0;
+}
+.about-bg h2, 
+.about-bg p {
+    position: relative;
+    z-index: 1;
+}
+
+/* === 校園相簿 === */
+.campus-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+.campus-gallery .card {
+    flex: 1 1 250px;
+    background: rgba(255, 240, 250, 0.85);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    text-align: center;
+    padding: 15px;
+    transition: transform 0.2s;
+}
+.campus-gallery .card:hover {
+    transform: translateY(-5px);
+}
+.campus-gallery img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* === 首頁 Hero 區塊 === */
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70vh;   /* 這裡高度你自己決定 */
+    background: none;
+    text-align: center;
+    padding: 0px;
+}
+.hero-card {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    max-width: 600px;
+    animation: fadeUp 1.5s ease forwards;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+/* 動畫 */
+@keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}

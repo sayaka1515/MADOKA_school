@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>關於見瀧原中學</h1>
+<p>
+見瀧原市立中學是一所現代化校園，擁有寬敞的教學樓與多元的社團活動。
+</p>
+
+<h2>校園場景</h2>
+<div class="campus-gallery">
+    <div class="card">
+        <img src="{{ url_for('static', filename='images/school.png') }}" alt="校園全景">
+        <p>校園大門</p>
+    </div>
+    <div class="card">
+        <img src="{{ url_for('static', filename='images/hall.png') }}" alt="學校大廳">
+        <p>校園大廳</p>
+    </div>
+    <div class="card">
+        <img src="{{ url_for('static', filename='images/classroom.png') }}" alt="教室">
+        <p>典型教室</p>
+    </div>
+</div>
+{% endblock %}
