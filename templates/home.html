@@ -1,13 +1,11 @@
 {% extends "base.html" %}
-
+{% block title %}首頁 - 見瀧原中學校{% endblock %}
 {% block content %}
 <div class="hero">
     <div class="hero-card">
-        <h1>歡迎來到見瀧原中學</h1>
-        <p>
-            這裡是青春與友情交織的地方。  
-            期待您的加入，一同見證見瀧原的點滴。
-        </p>
+        <h2>歡迎來到 見瀧原中學</h2>
+        <p>這裡是青春與友情交織的地方。期待您的加入，一同見證見瀧原的點滴。</p>
+        <a class="btn" href="{{ url_for('about') }}">立即探索</a>
     </div>
 </div>
 {% endblock %}

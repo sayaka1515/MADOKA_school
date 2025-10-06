@@ -1,11 +1,21 @@
 {% extends "base.html" %}
-{% block title %}最新消息 - 見瀧原市立中學{% endblock %}
+{% block title %}最新消息 - 見瀧原中學校{% endblock %}
 {% block content %}
-<h2>最新消息</h2>
-<ul>
-    <li>校慶即將舉辦，鹿目圓香同學將代表班級參加演講比賽！</li>
-    <li>上條恭介參加了弦樂社表演，大家都很期待。</li>
-    <li>轉學生曉美焰近日引起全校關注。</li>
-    <li>近日將有超強颱風經過，請做好防颱準備。</li>
-</ul>
+<section class="news-section">
+    <h2>最新消息</h2>
+
+    <div class="news-list">
+        <article class="news-card">
+            <h3>見瀧原中學文化祭即將舉辦</h3>
+            <time datetime="2025-10-01">2025-10-01</time>
+            <p>學生會與社團合作，文化祭將在學校大廳與操場同時展開，歡迎家長與同學參觀。</p>
+        </article>
+
+        <article class="news-card">
+            <h3>超強颱風即將進入日本列島</h3>
+            <time datetime="2025-10-03">2025-10-03</time>
+            <p>據傳10月7號，將有超強颱風，還請做好防颱準備，以及熟知避難所位置。</p>
+        </article>
+    </div>
+</section>
 {% endblock %}

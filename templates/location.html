@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 {% block title %}交通資訊 - 見瀧原中學校{% endblock %}
 {% block content %}
-<h2>交通資訊</h2>
-<p>見瀧原市中心搭乘巴士或地鐵即可到達。</p>
+<section class="location-section">
+    <h2>交通資訊</h2>
+
+    <div class="location-info">
+        <div class="map">
+            <!-- 替換成學校的 Google Maps embed URL -->
+            <iframe src="https://www.google.com/maps/embed?pb=" allowfullscreen loading="lazy"></iframe>
+        </div>
+
+        <div class="details">
+            <h3>地址</h3>
+            <p>見瀧原市 櫻花路 1 號</p>
+
+            <h3>交通方式</h3>
+            <ul>
+                <li><strong>公車：</strong>櫻花站下車，步行約 5 分鐘</li>
+                <li><strong>電車：</strong>見瀧原站出口，步行約 10 分鐘</li>
+                <li><strong>自行開車：</strong>校門口有臨時停車位（假日較難）</li>
+            </ul>
+        </div>
+    </div>
+</section>
 {% endblock %}
