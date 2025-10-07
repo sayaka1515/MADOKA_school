@@ -1,41 +1,41 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField
-from wtforms.validators import DataRequired, Length
+from flask import Flask, render_template, url_for, flash, redirect
+from forms import RegistrationForm, LoginForm
 
 app = Flask(__name__)
-app.secret_key = "madoka-secret"  # 表单需要用到 CSRF 防护
+app.config['SECRET_KEY'] = 'madoka_secret_key'
 
-# ====== 表单定義 ======
-class ContactForm(FlaskForm):
-    name = StringField("姓名", validators=[DataRequired(), Length(min=2, max=20)])
-    message = TextAreaField("留言內容", validators=[DataRequired(), Length(min=5)])
-    submit = SubmitField("送出留言")
-
-# ====== 頁面路由 ======
-@app.route('/')
+@app.route("/")
+@app.route("/home")
 def home():
     return render_template('home.html')
 
-@app.route('/about')
+@app.route("/about")
 def about():
     return render_template('about.html')
 
-@app.route('/location')
+@app.route("/location")
 def location():
     return render_template('location.html')
 
-@app.route('/news')
+@app.route("/news")
 def news():
     return render_template('news.html')
 
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-    form = ContactForm()
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
     if form.validate_on_submit():
-        flash(f"感謝 {form.name.data} 的留言！內容已收到！", "success")
-        return redirect(url_for('contact'))
-    return render_template('contact.html', form=form)
+        flash(f'帳號建立成功：{form.username.data}！', 'success')
+        return redirect(url_for('home'))
+    return render_template('register.html', title='註冊', form=form)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        flash(f'歡迎回來，{form.email.data}！', 'success')
+        return redirect(url_for('home'))
+    return render_template('login.html', title='登入', form=form)
 
 if __name__ == '__main__':
     app.run(debug=True)
