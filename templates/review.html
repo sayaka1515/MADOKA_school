@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="review-container">
+    <h2>校園評價區</h2>
+
+    {% if user %}
+    <form method="POST" action="{{ url_for('review') }}" class="review-form">
+        <label>星等：</label>
+        <select name="rating" required>
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+        </select><br><br>
+
+        <label>留言：</label><br>
+        <textarea name="comment" rows="4" cols="50" placeholder="寫下你的評價..." required></textarea><br><br>
+
+        <button type="submit">送出</button>
+    </form>
+    {% else %}
+    <p>請先 <a href="{{ url_for('login') }}">登入</a> 才能留言。</p>
+    {% endif %}
+
+    <hr>
+
+    <h3>最新留言</h3>
+    {% for r in reviews %}
+        <div class="review-card">
+            <strong>{{ r.username }}</strong> - {{ r.rating }} ★<br>
+            <em>{{ r.date_posted.strftime('%Y-%m-%d %H:%M') }}</em><br>
+            <p>{{ r.comment }}</p>
+        </div>
+        <hr>
+    {% else %}
+        <p>目前還沒有任何評價，快來留下第一則吧！</p>
+    {% endfor %}
+</div>
+{% endblock %}

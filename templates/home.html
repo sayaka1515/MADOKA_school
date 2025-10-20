@@ -3,8 +3,12 @@
 {% block content %}
 <div class="hero">
     <div class="hero-card">
-        <h2>歡迎來到 見瀧原中學</h2>
-        <p>這裡是青春與友情交織的地方。期待您的加入，一同見證見瀧原的點滴。</p>
+        {% if username %}
+            <h2>歡迎回來，{{ username }}！</h2>
+        {% else %}
+            <h2>歡迎來到見瀧原中學</h2>
+            <p>請先<a href="{{ url_for('login') }}">登入</a>或<a href="{{ url_for('register') }}">註冊</a>。</p>
+        {% endif %}
         <a class="btn" href="{{ url_for('about') }}">立即探索</a>
     </div>
 </div>
