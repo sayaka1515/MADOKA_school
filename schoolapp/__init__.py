@@ -1,12 +1,16 @@
+# ...existing code...
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
+from flask_mail import Mail
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
+mail = Mail()
+
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 
@@ -20,9 +24,20 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///madoka.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Mail config (use environment vars in production)
+    app.config.update({
+        'MAIL_SERVER': os.environ.get('MAIL_SERVER', 'smtp.example.com'),
+        'MAIL_PORT': int(os.environ.get('MAIL_PORT', 587)),
+        'MAIL_USE_TLS': os.environ.get('MAIL_USE_TLS', 'true').lower() in ('1','true'),
+        'MAIL_USERNAME': os.environ.get('MAIL_USERNAME'),
+        'MAIL_PASSWORD': os.environ.get('MAIL_PASSWORD'),
+        'MAIL_DEFAULT_SENDER': os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@example.com')
+    })
+
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    mail.init_app(app)
 
     with app.app_context():
         # 延遲匯入 routes 以避免循環匯入
@@ -33,3 +48,4 @@ def create_app():
         db.create_all()
 
     return app
+# ...existing code...

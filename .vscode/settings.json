@@ -1,4 +1,13 @@
 {
-    "cSpell.words": ["madoka", "backref", "schoolapp"]
+    "cSpell.words": [
+        "madoka",
+        "backref",
+        "schoolapp"
+    ],
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 
 }

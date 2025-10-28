@@ -15,9 +15,15 @@
         <li><a href="{{ url_for('about') }}">關於我們</a></li>
         <li><a href="{{ url_for('news') }}">最新消息</a></li>
         <li><a href="{{ url_for('location') }}">交通資訊</a></li>
+<!-- ...existing code... -->
     {% if current_user.is_authenticated %}
         <span>你好，{{ current_user.username }}</span> |
         <a href="{{ url_for('logout') }}">登出</a>
+        {% if not current_user.is_confirmed %}
+            <span style="margin-left:10px;padding:6px;border-radius:6px;background:#ffcc00;color:#000;font-weight:600;">
+                未驗證帳號 — <a href="{{ url_for('resend_verification') }}">重新寄驗證信</a>
+            </span>
+        {% endif %}
     {% else %}
         <a href="{{ url_for('login') }}">登入</a> |
         <a href="{{ url_for('register') }}">註冊</a>
@@ -29,10 +35,26 @@
 
 
         </nav>
+<!-- ...existing code... -->
     </header>
+    <!-- ...existing code... -->
     <main>
+        <!-- 顯示 flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container" style="max-width:900px;margin:16px auto;">
+              {% for category, msg in messages %}
+                <div class="flash flash-{{ category }}" style="padding:10px;border-radius:6px;margin-bottom:8px;background:#fff;border-left:5px solid #cc3366;">
+                  {{ msg }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
+<!-- ...existing code... -->
     <footer>
         &copy; 2025 見瀧原市立中學
     </footer>

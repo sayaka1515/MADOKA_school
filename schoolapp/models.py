@@ -7,6 +7,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
+    is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     reviews = db.relationship('Review', backref='author', lazy=True)
 
 class Review(db.Model):
