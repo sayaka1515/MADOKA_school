@@ -1,3 +1,4 @@
+# ...existing code...
 from schoolapp import db
 from flask_login import UserMixin
 from datetime import datetime
@@ -8,6 +9,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
+    profile_image = db.Column(db.String(100), nullable=False, default='default.jpg')  # 新增欄位
     reviews = db.relationship('Review', backref='author', lazy=True)
 
 class Review(db.Model):
@@ -16,3 +18,4 @@ class Review(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     date_posted = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+# ...existing code...

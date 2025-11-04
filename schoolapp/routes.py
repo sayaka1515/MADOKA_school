@@ -1,11 +1,18 @@
 from flask import render_template, url_for, flash, redirect, session, request, current_app as app
 from schoolapp import db, bcrypt, login_manager, mail
 from schoolapp.models import User, Review
-from schoolapp.forms import RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm
+from schoolapp.forms import (
+    RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, UpdateAccountForm
+)
 from flask_login import login_user, logout_user, current_user, login_required
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Message
 
+import os
+import secrets
+from PIL import Image
+
+# ---- login manager callbacks ----
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -15,6 +22,7 @@ def unauthorized_callback():
     flash('請先登入以存取該頁面。', 'warning')
     return redirect(url_for('login'))
 
+# ---- helpers ----
 def _get_serializer(salt):
     secret = app.config.get('SECRET_KEY') or 'madoka_secret_key'
     return URLSafeTimedSerializer(secret, salt=salt)
@@ -29,7 +37,6 @@ def send_verification_link(email):
         msg = Message(subject=subject, recipients=[email], body=body)
         mail.send(msg)
     except Exception as e:
-        # 開發時 fallback：列印連結以便測試
         print(f"[MAIL ERROR] {e}  — fallback to printing link")
         print(f'[EMAIL] 驗證連結（寄到 {email}）： {link}')
     return token
@@ -48,26 +55,78 @@ def send_reset_link(email):
         print(f'[EMAIL] 密碼重設連結（寄到 {email}）： {link}')
     return token
 
+def save_picture(form_picture):
+    """儲存上傳大頭照：先做中心正方形裁切，再縮放到 125x125，回傳檔名。"""
+    if not form_picture:
+        return None
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(getattr(form_picture, 'filename', '') or '')
+    f_ext = (f_ext.lower() if f_ext else '.jpg')
+    picture_fn = random_hex + f_ext
+    picture_dir = os.path.join(app.root_path, 'static', 'profile_pics')
+    os.makedirs(picture_dir, exist_ok=True)
+    picture_path = os.path.join(picture_dir, picture_fn)
+
+    try:
+        img = Image.open(form_picture)
+        # 轉向（若有 Exif Orientation，可在此處處理；簡單處理略過）
+        w, h = img.size
+        side = min(w, h)
+        left = (w - side) // 2
+        top = (h - side) // 2
+        img = img.crop((left, top, left + side, top + side))
+        img = img.resize((125, 125), Image.LANCZOS)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.save(picture_path, optimize=True, quality=85)
+        app.logger.debug(f"[save_picture] saved -> {picture_path}")
+        return picture_fn
+    except Exception as e:
+        app.logger.error(f"[save_picture] error saving image: {e}")
+        return None
+
+# ---- routes ----
+# ...existing code...
+def _display_username():
+    """回傳應顯示的 username；若 session 資料過期/不存在則清除 session。"""
+    if current_user.is_authenticated:
+        return current_user.username
+    uname = session.get('username')
+    if not uname:
+        return None
+    # 驗證此 uname 是否仍存在於資料庫（避免顯示已刪除的測試帳號）
+    try:
+        u = User.query.filter_by(username=uname).first()
+    except Exception:
+        u = None
+    if u:
+        return uname
+    # stale session data -> 清除
+    session.pop('username', None)
+    session.pop('email', None)
+    return None
+
 @app.route("/")
 @app.route("/home")
 def home():
-    username = current_user.username if current_user.is_authenticated else session.get('username')
+    username = _display_username()
     return render_template('home.html', username=username)
 
 @app.route("/about")
 def about():
-    username = current_user.username if current_user.is_authenticated else session.get('username')
+    username = _display_username()
     return render_template('about.html', username=username)
 
 @app.route("/location")
 def location():
-    username = current_user.username if current_user.is_authenticated else session.get('username')
+    username = _display_username()
     return render_template('location.html', username=username)
 
 @app.route("/news")
 def news():
-    username = current_user.username if current_user.is_authenticated else session.get('username')
+    username = _display_username()
     return render_template('news.html', username=username)
+# ...existing code...
 
 @app.route('/resend_verification')
 @login_required
@@ -77,7 +136,6 @@ def resend_verification():
         return redirect(url_for('home'))
     token = send_verification_link(current_user.email)
     if app.debug:
-        # 開發方便：顯示可點的驗證連結（不要在正式環境保留）
         link = url_for('confirm_email', token=token, _external=True)
         return render_template('dev_verification.html', link=link)
     flash('已重新發送驗證信，請收信（若未收到請檢查垃圾郵件）。', 'info')
@@ -103,7 +161,7 @@ def register():
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
-            print("⚠️ 註冊錯誤：", e)
+            app.logger.error(f"register error: {e}")
             flash('註冊失敗，請稍後再試。', 'danger')
     return render_template('register.html', title='註冊', form=form)
 
@@ -151,7 +209,7 @@ def login():
             flash('登入失敗，請檢查信箱或密碼', 'danger')
     else:
         if request.method == 'POST':
-            print("DEBUG: form.errors =", form.errors)
+            app.logger.debug(f"login form errors: {form.errors}")
     return render_template('login.html', title='登入', form=form)
 
 @app.route("/logout")
@@ -203,6 +261,53 @@ def reset_token(token):
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='重設密碼', form=form)
 
+@app.route("/account", methods=['GET', 'POST'])
+@login_required
+def account():
+    form = UpdateAccountForm()
+    if form.validate_on_submit():
+        # 處理圖片上傳
+        if getattr(form, 'picture', None) and form.picture.data:
+            picture_file = save_picture(form.picture.data)
+            if picture_file:
+                # 刪除舊檔（非 default.jpg）
+                try:
+                    old = getattr(current_user, 'profile_image', None)
+                    if old and old != 'default.jpg':
+                        old_path = os.path.join(app.root_path, 'static', 'profile_pics', old)
+                        if os.path.exists(old_path):
+                            os.remove(old_path)
+                            app.logger.debug(f"[account] removed old image: {old_path}")
+                except Exception as e:
+                    app.logger.error(f"[account] error removing old image: {e}")
+                current_user.profile_image = picture_file
+            else:
+                flash('上傳圖片失敗，請檢查檔案格式與大小。', 'warning')
+
+        # 更新其他欄位
+        current_user.username = form.username.data.strip()
+        current_user.email = form.email.data.strip().lower()
+        try:
+            db.session.commit()
+            flash('您的帳號已更新。', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"[account] db commit error: {e}")
+            flash('更新失敗，請稍後重試。', 'danger')
+        return redirect(url_for('account'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+
+    image_file = url_for('static', filename=f'profile_pics/{getattr(current_user, "profile_image", "default.jpg")}')
+    return render_template('account.html', title='帳號', image_file=image_file, form=form)
+
+@app.route("/profile")
+@login_required
+def profile():
+    reviews_q = Review.query.filter_by(user_id=current_user.id).order_by(Review.date_posted.desc()).all()
+    return render_template('profile.html', user=current_user, reviews=reviews_q)
+
 @app.route("/review", methods=['GET', 'POST'])
 def review():
     username = current_user.username if current_user.is_authenticated else session.get('username')
@@ -240,4 +345,4 @@ def review():
 @app.route("/debug_users")
 def debug_users():
     users = User.query.all()
-    return "<br>".join([f"{u.id} | {u.username} | {u.email} | confirmed={u.is_confirmed}" for u in users]) or "no users"
+    return "<br>".join([f"{u.id} | {u.username} | {u.email} | confirmed={u.is_confirmed} | profile_image={getattr(u,'profile_image',None)}" for u in users]) or "no users"

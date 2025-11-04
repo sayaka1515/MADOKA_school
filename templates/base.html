@@ -15,16 +15,21 @@
         <li><a href="{{ url_for('about') }}">關於我們</a></li>
         <li><a href="{{ url_for('news') }}">最新消息</a></li>
         <li><a href="{{ url_for('location') }}">交通資訊</a></li>
-<!-- ...existing code... -->
+
     {% if current_user.is_authenticated %}
+        <img src="{{ url_for('static', filename='profile_pics/' ~ current_user.profile_image) }}" alt="avatar" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:8px;">
         <span>你好，{{ current_user.username }}</span> |
+        <a href="{{ url_for('profile') }}">個人中心</a> |
+        <a href="{{ url_for('account') }}">帳號</a> |
         <a href="{{ url_for('logout') }}">登出</a>
+
         {% if not current_user.is_confirmed %}
             <span style="margin-left:10px;padding:6px;border-radius:6px;background:#ffcc00;color:#000;font-weight:600;">
                 未驗證帳號 — <a href="{{ url_for('resend_verification') }}">重新寄驗證信</a>
             </span>
         {% endif %}
     {% else %}
+<!-- ...existing code... -->
         <a href="{{ url_for('login') }}">登入</a> |
         <a href="{{ url_for('register') }}">註冊</a>
     {% endif %}

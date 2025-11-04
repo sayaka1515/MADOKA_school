@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+  <h2>帳戶設定</h2>
+  <div style="text-align:center;margin-bottom:12px;">
+    <img id="current-avatar" src="{{ image_file }}" alt="大頭照" style="width:125px;height:125px;border-radius:50%;object-fit:cover;">
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="account-form">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.username.label }}<br>
+      {{ form.username(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.email.label }}<br>
+      {{ form.email(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.picture.label }}<br>
+      {{ form.picture(id="picture-input") }}
+      <p><small>支援 JPG / PNG。選擇後會顯示「中心裁切預覽」，實際儲存會以同樣裁切方式產生 125x125 大頭照。</small></p>
+    </div>
+
+
+    <div id="preview-wrap" class="preview-wrap" style="display:none;margin-bottom:12px;">
+      <p>裁切預覽：</p>
+      <canvas id="preview-canvas" width="200" height="200" aria-hidden="true"></canvas>
+      <p><small>預覽為中心裁切效果（送出後伺服器也會以相同方式裁切並縮小）。</small></p>
+    </div>
+
+
+    <div class="form-group">
+      {{ form.submit(class="btn") }}
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('picture-input');
+  const wrap = document.getElementById('preview-wrap');
+  const canvas = document.getElementById('preview-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function drawCenterCrop(img){
+    const cw = canvas.width, ch = canvas.height;
+    // 計算中心正方形來源區域
+    const w = img.width, h = img.height;
+    const side = Math.min(w, h);
+    const sx = (w - side) / 2;
+    const sy = (h - side) / 2;
+    // 清除並畫出裁切到 canvas（保持正方）
+    ctx.clearRect(0,0,cw,ch);
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, cw, ch);
+    wrap.style.display = 'block';
+  }
+
+  input && input.addEventListener('change', function(e){
+    const file = this.files && this.files[0];
+    if(!file) {
+      wrap.style.display = 'none';
+      return;
+    }
+    if(!file.type.match('image.*')){
+      alert('請選擇影像檔 (jpg / png)。');
+      this.value = '';
+      wrap.style.display = 'none';
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function(){
+      drawCenterCrop(img);
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function(){
+      alert('載入圖片失敗。');
+      wrap.style.display = 'none';
+    };
+    img.src = url;
+  });
+})();
+</script>
+{% endblock %}

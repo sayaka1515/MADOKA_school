@@ -1,6 +1,8 @@
+# ...existing code...
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from flask_wtf.file import FileField, FileAllowed
 import re
 
 try:
@@ -39,3 +41,10 @@ class ResetPasswordForm(FlaskForm):
     password = PasswordField('新密碼', validators=[DataRequired(), validate_password_strength])
     confirm_password = PasswordField('確認新密碼', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('重設密碼')
+
+class UpdateAccountForm(FlaskForm):
+    username = StringField('使用者名稱', validators=[DataRequired(), Length(min=2, max=20)])
+    email = EmailField('電子郵件', validators=[DataRequired(), Email()], filters=[normalize_email])
+    picture = FileField('上傳大頭照', validators=[FileAllowed(['jpg', 'jpeg', 'png'])])
+    submit = SubmitField('更新帳號')
+# ...existing code...

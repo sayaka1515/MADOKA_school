@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="profile-container">
+  <h2>個人中心</h2>
+
+  <div class="profile-info" style="display:flex;gap:18px;align-items:center;margin-bottom:18px;">
+    <img src="{{ url_for('static', filename='profile_pics/' ~ user.profile_image) }}" alt="avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;">
+    <div>
+      <dl>
+        <dt><strong>使用者名稱</strong></dt>
+        <dd>{{ user.username }}</dd>
+        <dt><strong>電子郵件</strong></dt>
+        <dd>{{ user.email }}</dd>
+        <dt><strong>驗證狀態</strong></dt>
+        <dd>{{ '已驗證' if user.is_confirmed else '未驗證' }}</dd>
+      </dl>
+      <p style="margin-top:8px;">
+        <a class="btn" href="{{ url_for('account') }}">編輯帳號</a>
+        <a class="btn" href="{{ url_for('review') }}" style="margin-left:8px;">我的留言</a>
+      </p>
+    </div>
+  </div>
+
+  <h3>我的留言</h3>
+  {% if reviews %}
+    {% for r in reviews %}
+      <div class="review-card" style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;">
+        <small style="color:#666;">{{ r.date_posted.strftime('%Y-%m-%d %H:%M') }}</small>
+        <p style="margin:6px 0 0;">{{ r.comment }}</p>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>尚未有留言。</p>
+  {% endif %}
+</div>
+{% endblock %}
