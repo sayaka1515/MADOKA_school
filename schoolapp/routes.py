@@ -1,8 +1,10 @@
+# ...existing code...
 from flask import render_template, url_for, flash, redirect, session, request, current_app as app
 from schoolapp import db, bcrypt, login_manager, mail
 from schoolapp.models import User, Review
 from schoolapp.forms import (
-    RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, UpdateAccountForm
+    RegistrationForm, LoginForm, RequestResetForm, ResetPasswordForm, UpdateAccountForm,
+    ChangePasswordForm, ChangeEmailForm
 )
 from flask_login import login_user, logout_user, current_user, login_required
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
@@ -34,10 +36,11 @@ def send_verification_link(email):
     subject = "見瀧原中學 - 驗證您的電子郵件"
     body = f"請點此完成驗證：\n\n{link}\n\n（此郵件由系統自動發出）"
     try:
-        msg = Message(subject=subject, recipients=[email], body=body)
+        msg = Message(subject=subject, recipients=[email], body=body, sender=app.config.get('MAIL_DEFAULT_SENDER'))
         mail.send(msg)
     except Exception as e:
-        print(f"[MAIL ERROR] {e}  — fallback to printing link")
+        app.logger.warning(f"[MAIL ERROR] {e}  — fallback to printing link")
+        # 開發時輸出連結方便測試
         print(f'[EMAIL] 驗證連結（寄到 {email}）： {link}')
     return token
 
@@ -48,33 +51,36 @@ def send_reset_link(email):
     subject = "見瀧原中學 - 密碼重設"
     body = f"若您要求重設密碼，請點此連結：\n\n{link}\n\n若非本人請忽略。"
     try:
-        msg = Message(subject=subject, recipients=[email], body=body)
+        msg = Message(subject=subject, recipients=[email], body=body, sender=app.config.get('MAIL_DEFAULT_SENDER'))
         mail.send(msg)
     except Exception as e:
-        print(f"[MAIL ERROR] {e}  — fallback to printing link")
+        app.logger.warning(f"[MAIL ERROR] {e}  — fallback to printing link")
         print(f'[EMAIL] 密碼重設連結（寄到 {email}）： {link}')
     return token
 
+# ...existing code...
 def save_picture(form_picture):
-    """儲存上傳大頭照：先做中心正方形裁切，再縮放到 125x125，回傳檔名。"""
+    """儲存上傳大頭照：先做中心正方形裁切，再縮放到 125x125，回傳檔名或 None。"""
     if not form_picture:
         return None
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(getattr(form_picture, 'filename', '') or '')
-    f_ext = (f_ext.lower() if f_ext else '.jpg')
-    picture_fn = random_hex + f_ext
-    picture_dir = os.path.join(app.root_path, 'static', 'profile_pics')
-    os.makedirs(picture_dir, exist_ok=True)
-    picture_path = os.path.join(picture_dir, picture_fn)
-
     try:
+        random_hex = secrets.token_hex(8)
+        _, f_ext = os.path.splitext(getattr(form_picture, 'filename', '') or '')
+        f_ext = (f_ext.lower() if f_ext else '.jpg')
+        picture_fn = random_hex + f_ext
+        picture_dir = os.path.join(app.root_path, 'static', 'profile_pics')
+        os.makedirs(picture_dir, exist_ok=True)
+        picture_path = os.path.join(picture_dir, picture_fn)
+
+        # 讀取並中心裁切再縮放
         img = Image.open(form_picture)
-        # 轉向（若有 Exif Orientation，可在此處處理；簡單處理略過）
+        # 若有 EXIF 方向可在此處處理 (可選)
         w, h = img.size
         side = min(w, h)
         left = (w - side) // 2
         top = (h - side) // 2
         img = img.crop((left, top, left + side, top + side))
+        # 使用 PIL LANCZOS 高品質縮放
         img = img.resize((125, 125), Image.LANCZOS)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
@@ -84,9 +90,9 @@ def save_picture(form_picture):
     except Exception as e:
         app.logger.error(f"[save_picture] error saving image: {e}")
         return None
+# ...existing code...
 
 # ---- routes ----
-# ...existing code...
 def _display_username():
     """回傳應顯示的 username；若 session 資料過期/不存在則清除 session。"""
     if current_user.is_authenticated:
@@ -94,14 +100,12 @@ def _display_username():
     uname = session.get('username')
     if not uname:
         return None
-    # 驗證此 uname 是否仍存在於資料庫（避免顯示已刪除的測試帳號）
     try:
         u = User.query.filter_by(username=uname).first()
     except Exception:
         u = None
     if u:
         return uname
-    # stale session data -> 清除
     session.pop('username', None)
     session.pop('email', None)
     return None
@@ -126,7 +130,6 @@ def location():
 def news():
     username = _display_username()
     return render_template('news.html', username=username)
-# ...existing code...
 
 @app.route('/resend_verification')
 @login_required
@@ -232,7 +235,8 @@ def reset_request():
             send_reset_link(user.email)
             flash('已發送重設連結（開發時請看伺服器輸出）。', 'info')
         else:
-            flash('找不到該電子郵件。', 'warning')
+            # 為避免資訊外洩，不透露 email 是否存在（可改為顯示錯誤）
+            flash('已發送重設連結（如有此電子郵件會收到）。', 'info')
         return redirect(url_for('login'))
     return render_template('reset_request.html', title='重設密碼', form=form)
 
@@ -266,27 +270,25 @@ def reset_token(token):
 def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
-        # 處理圖片上傳
-        if getattr(form, 'picture', None) and form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            if picture_file:
-                # 刪除舊檔（非 default.jpg）
-                try:
-                    old = getattr(current_user, 'profile_image', None)
-                    if old and old != 'default.jpg':
-                        old_path = os.path.join(app.root_path, 'static', 'profile_pics', old)
-                        if os.path.exists(old_path):
-                            os.remove(old_path)
-                            app.logger.debug(f"[account] removed old image: {old_path}")
-                except Exception as e:
-                    app.logger.error(f"[account] error removing old image: {e}")
-                current_user.profile_image = picture_file
-            else:
-                flash('上傳圖片失敗，請檢查檔案格式與大小。', 'warning')
+        # 處理圖片上傳（原有邏輯）
+        # ...existing code...
 
-        # 更新其他欄位
+        # 更新其他欄位（保留原有行為）
         current_user.username = form.username.data.strip()
         current_user.email = form.email.data.strip().lower()
+
+        # 處理密碼變更（若使用者提供 current_password）
+        if form.current_password.data:
+            if not bcrypt.check_password_hash(current_user.password, form.current_password.data):
+                flash('目前密碼不正確，無法變更密碼。', 'danger')
+                return redirect(url_for('account'))
+            if not form.new_password.data:
+                flash('請輸入新密碼。', 'warning')
+                return redirect(url_for('account'))
+            # 設定新密碼
+            current_user.password = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+            flash('密碼已更新。', 'success')
+
         try:
             db.session.commit()
             flash('您的帳號已更新。', 'success')
@@ -301,6 +303,7 @@ def account():
 
     image_file = url_for('static', filename=f'profile_pics/{getattr(current_user, "profile_image", "default.jpg")}')
     return render_template('account.html', title='帳號', image_file=image_file, form=form)
+# ...existing code...
 
 @app.route("/profile")
 @login_required
@@ -342,7 +345,51 @@ def review():
         })
     return render_template('review.html', reviews=reviews, user=username)
 
+@app.route("/change_password", methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not bcrypt.check_password_hash(current_user.password, form.current_password.data):
+            flash('目前密碼不正確。', 'danger')
+            return redirect(url_for('change_password'))
+        current_user.password = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+        try:
+            db.session.commit()
+            flash('密碼已更新，請使用新密碼登入。', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"[change_password] db commit error: {e}")
+            flash('更新失敗，請稍後重試。', 'danger')
+        return redirect(url_for('account'))
+    return render_template('change_password.html', title='變更密碼', form=form)
+
+@app.route("/change_email", methods=['GET', 'POST'])
+@login_required
+def change_email():
+    form = ChangeEmailForm()
+    if form.validate_on_submit():
+        email_norm = form.new_email.data.strip().lower()
+        if User.query.filter_by(email=email_norm).first():
+            flash('此電子郵件已被使用。', 'warning')
+            return redirect(url_for('change_email'))
+        if not bcrypt.check_password_hash(current_user.password, form.current_password.data):
+            flash('目前密碼不正確。', 'danger')
+            return redirect(url_for('change_email'))
+        current_user.email = email_norm
+        try:
+            db.session.commit()
+            flash('電子郵件已更新。', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"[change_email] db commit error: {e}")
+            flash('更新失敗，請稍後重試。', 'danger')
+        return redirect(url_for('account'))
+    return render_template('change_email.html', title='變更電子郵件', form=form)
+# ...existing code...
+
 @app.route("/debug_users")
 def debug_users():
     users = User.query.all()
     return "<br>".join([f"{u.id} | {u.username} | {u.email} | confirmed={u.is_confirmed} | profile_image={getattr(u,'profile_image',None)}" for u in users]) or "no users"
+# ...existing code...

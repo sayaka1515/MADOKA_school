@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+  <h2>變更電子郵件</h2>
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.new_email.label }}<br>
+      {{ form.new_email(class="form-control", autocomplete="email") }}
+    </div>
+    <div class="form-group">
+      {{ form.current_password.label }}<br>
+      {{ form.current_password(class="form-control", autocomplete="current-password") }}
+    </div>
+    <div class="form-group">
+      {{ form.submit(class="btn") }}
+    </div>
+    <p><a href="{{ url_for('account') }}">返回帳號設定</a></p>
+  </form>
+</div>
+{% endblock %}

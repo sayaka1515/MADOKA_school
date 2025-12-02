@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="form-container">
-  <h2>重設密碼 — 發送連結</h2>
-  <form method="POST" action="{{ url_for('reset_request') }}">
+  <h2>重設密碼</h2>
+  <form method="POST" action="">
     {{ form.hidden_tag() }}
     <div class="form-group">
       {{ form.email.label }}<br>

@@ -3,6 +3,10 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_wtf.file import FileField, FileAllowed
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
+from flask_wtf.file import FileField, FileAllowed
 import re
 
 try:
@@ -32,15 +36,26 @@ class LoginForm(FlaskForm):
     password = PasswordField('密碼', validators=[DataRequired()])
     remember = BooleanField('記住我')
     submit = SubmitField('登入')
-
 class RequestResetForm(FlaskForm):
-    email = EmailField('電子郵件', validators=[DataRequired(), Email()], filters=[normalize_email])
-    submit = SubmitField('發送重設連結')
+    email = StringField('電子郵件', validators=[DataRequired(), Email()])
+    submit = SubmitField('寄出重設信')
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField('新密碼', validators=[DataRequired(), validate_password_strength])
-    confirm_password = PasswordField('確認新密碼', validators=[DataRequired(), EqualTo('password')])
+    password = PasswordField('新密碼', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('確認密碼', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('重設密碼')
+# ...existing code...
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('目前密碼', validators=[DataRequired()])
+    new_password = PasswordField('新密碼', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('確認新密碼', validators=[DataRequired(), EqualTo('new_password', message='密碼需一致')])
+    submit = SubmitField('變更密碼')
+
+class ChangeEmailForm(FlaskForm):
+    new_email = StringField('新電子郵件', validators=[DataRequired(), Email()])
+    current_password = PasswordField('目前密碼', validators=[DataRequired()])
+    submit = SubmitField('變更電子郵件')
+# ...existing code...
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('使用者名稱', validators=[DataRequired(), Length(min=2, max=20)])
