@@ -4,9 +4,10 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_wtf.file import FileField, FileAllowed
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
 from flask_wtf.file import FileField, FileAllowed
+
 import re
 
 try:
@@ -45,6 +46,7 @@ class ResetPasswordForm(FlaskForm):
     confirm_password = PasswordField('確認密碼', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('重設密碼')
 # ...existing code...
+
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('目前密碼', validators=[DataRequired()])
     new_password = PasswordField('新密碼', validators=[DataRequired(), Length(min=6)])

@@ -4,7 +4,7 @@
     <h2>校園評價區</h2>
 
     {% if user %}
-    <form method="POST" action="{{ url_for('review') }}" class="review-form">
+    <form method="POST" action="{{ url_for('review.review') }}" class="review-form">
         <label>星等：</label>
         <select name="rating" required>
             <option value="5">★★★★★ (5)</option>
@@ -20,7 +20,7 @@
         <button type="submit">送出</button>
     </form>
     {% else %}
-    <p>請先 <a href="{{ url_for('login') }}">登入</a> 才能留言。</p>
+    <p>請先 <a href="{{ url_for('auth.login') }}">登入</a> 才能留言。</p>
     {% endif %}
 
     <hr>

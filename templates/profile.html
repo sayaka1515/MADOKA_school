@@ -15,8 +15,8 @@
         <dd>{{ '已驗證' if user.is_confirmed else '未驗證' }}</dd>
       </dl>
       <p style="margin-top:8px;">
-        <a class="btn" href="{{ url_for('account') }}">編輯帳號</a>
-        <a class="btn" href="{{ url_for('review') }}" style="margin-left:8px;">我的留言</a>
+        <a class="btn" href="{{ url_for('account.account') }}">編輯帳號</a>
+        <a class="btn" href="{{ url_for('review.review') }}" style="margin-left:8px;">我的留言</a>
       </p>
     </div>
   </div>
